@@ -1,0 +1,47 @@
+---
+- name: Check if short hostname length is compliant
+  assert:
+    that: ansible_hostname | length <= ad_membership_netbios_max_length
+    msg: 'Hostname too long. Maximum Netbios characters: {{ ad_membership_netbios_max_length }}'
+
+- name: Create computer object in Active Directory
+  shell: >
+        set -o pipefail &&
+        /usr/bin/echo '{{ ad_membership_sa_password }}' |
+        /usr/sbin/adcli preset-computer -v
+        --login-user={{ ad_membership_sa_username }}
+        --domain={{ ansible_domain }}
+        --domain-ou={{ ad_membership_computer_ou }}
+        --domain-controller={{ ad_membership_ad_controller }}
+        --user-principal
+        --os-name={{ ansible_distribution }}
+        --os-version={{ ansible_distribution_version }}
+        --stdin-password
+        {{ ansible_fqdn }}
+  register: ad_membership_register_create_ad_object
+  when:
+    - not ad_membership_leave_ad
+    - not ad_membership_register_join_state
+  no_log: True
+
+- name: Join Active Directory
+  shell: >
+          set -o pipefail &&
+          /usr/bin/echo '{{ ad_membership_sa_password }}' |
+          /usr/sbin/realm join -v --user={{ ad_membership_sa_username }}
+          --computer-ou={{ ad_membership_computer_ou }}
+          --computer-name={{ ansible_hostname | upper }}
+          --user-principal=host/{{ ansible_fqdn }}@{{ ansible_domain | upper }}
+          --os-name={{ ansible_distribution }}
+          --os-version={{ ansible_distribution_version }}
+          --client-software=sssd
+          --server-software=active-directory
+          --membership-software=adcli
+          {{ ad_membership_ad_controller }}
+  register: ad_membership_register_join_ad_cmd
+  when:
+    - not ad_membership_leave_ad
+    - not ad_membership_register_join_state
+  no_log: True
+
+...

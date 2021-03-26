@@ -1,0 +1,22 @@
+---
+galaxy_info:
+  author: Michael Cleary
+  description: Manage membership of a host in Active Directory.
+  company: ClusterApps
+  role_name: ad_membership
+  license: license (BSD, MIT)
+  min_ansible_version: 2.9
+  platforms:
+    - name: EL
+      versions:
+        - 7
+        - 8
+  galaxy_tags:
+    - activedirectory
+    - ad
+    - domain
+    - realm
+
+dependencies: []
+
+...

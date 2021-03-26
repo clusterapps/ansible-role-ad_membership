@@ -1,0 +1,57 @@
+---
+### Software packages required for joining a Active Directory
+ad_membership_required_packages:
+  - krb5-workstation
+  - krb5-libs
+  - adcli
+  - realmd
+  - authconfig
+  - samba-client
+  - samba-common
+  - samba-common-tools
+  - sssd
+  - sssd-ad
+  - sssd-krb5
+  - oddjob
+  - oddjob-mkhomedir
+
+### AD Controllers
+## In case of a large forest provide the PDC FQDN.
+ad_membership_use_discovered_domain_controller: True
+ad_membership_ad_controller_random_selection: False
+ad_membership_ad_controllers: []
+
+### AD Server/Computer Organizational Unit
+ad_membership_computer_ou: ''
+
+### AD Organizational Unit search base
+ad_membership_ou_user_search_base: ''
+
+### Netbios max hostname length
+ad_membership_netbios_max_length: 15
+
+### Leave AD if required
+## This will remove the Kerberos keytab and cleanup the sssd configuration on
+## the 'client'. It will also remove the AD computer object.
+ad_membership_leave_ad: False
+
+### Managing AD groups.
+## For better maintainability, the group list is built during runtime by
+## combining all lists together. This will provide the freedom of declaring
+## custom group lists for granular control. The lists require a naming
+## convention by using a pattern. The pattern is rendered as a single list
+## which can be used for iteration with variable:
+## 'ad_membership_allowed_group_list'. The list name pattern needs to
+## start with: 'ad_membership_allowed_group_list_'
+
+ad_membership_allowed_group_list_default: []
+
+## Example of a list for default inheritance:
+# ad_membership_allowed_group_list_default:
+#   - Special-Group-01
+#   - super_special_group_01
+
+### Molecule dummy switch
+ad_membership_molecule_dummy: False
+
+...

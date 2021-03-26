@@ -1,0 +1,37 @@
+---
+- name: Leave Active Directory
+  shell: >
+        set -o pipefail &&
+        /usr/bin/echo '{{ ad_membership_sa_password }}' |
+        /usr/sbin/realm leave -v
+        --user={{ ad_membership_sa_username }}
+        --remove
+        --unattended
+        {{ ansible_domain }}
+  register: ad_membership_register_leave_ad_cmd
+  when:
+    - ad_membership_leave_ad
+    - ad_membership_register_join_state
+  notify:
+    - stop_sssd
+    - clean_sss_cache
+  ignore_errors: True
+  no_log: True
+
+- name: Remove computer object from Active Directory
+  shell: >
+        set -o pipefail &&
+        /usr/bin/echo '{{ ad_membership_sa_password }}' |
+        /usr/sbin/adcli delete-computer -v
+        --login-user={{ ad_membership_sa_username }}
+        --domain={{ ansible_domain }}
+        --domain-controller={{ ad_membership_ad_controller }}
+        --stdin-password
+  register: ad_membership_register_delete_ad_object
+  when:
+    - ad_membership_leave_ad
+    - ad_membership_register_join_state
+  ignore_errors: True
+  no_log: True
+
+...

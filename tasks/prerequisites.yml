@@ -1,0 +1,71 @@
+---
+- name: Ensure required packages are installed
+  package:
+    name: '{{ ad_membership_required_packages }}'
+    state: present
+
+- name: Discover domain configuration with adcli
+  command: /usr/sbin/adcli info {{ ansible_domain }}
+  register: ad_membership_register_adcli_discover
+  changed_when: False
+  failed_when: False
+
+- name: Discover domain configuration with realm
+  command: /usr/sbin/realm discover {{ ansible_domain }}
+  register: ad_membership_register_realm_discover
+  changed_when: False
+  failed_when: False
+
+- name: Check existing realm configuration
+  command: /usr/sbin/realm list
+  register: ad_membership_register_realm_list
+  changed_when: False
+  failed_when: False
+
+- name: Set facts for domain and join states
+  block:
+    - name: Domain state is unusable
+      set_fact:
+        ad_membership_register_domain_state: False
+      when:
+        - "'domain-controller-usable = yes' not in ad_membership_register_adcli_discover.stdout"
+
+    - name: Domain state is usable
+      set_fact:
+        ad_membership_register_domain_state: True
+      when:
+        - "'domain-controller-usable = yes' in ad_membership_register_adcli_discover.stdout"
+
+    - name: Membership state is unjoined
+      set_fact:
+        ad_membership_register_join_state: False
+      when:
+        - ad_membership_register_realm_list.stdout | length < 1
+        - '"configured: no" in ad_membership_register_realm_discover.stdout'
+
+    - name: Membership state is joined
+      set_fact:
+        ad_membership_register_join_state: True
+      when:
+        - ad_membership_register_realm_list.stdout | length > 1
+        - '"configured: kerberos-member" in ad_membership_register_realm_discover.stdout'
+
+    - name: Select AD controller
+      set_fact:
+        ad_membership_ad_controller: '{% if ad_membership_use_discovered_domain_controller %}
+                                          {{ ad_membership_register_adcli_discover.stdout |
+                                          regex_search("^domain-controller(.*)$", multiline=True, ignorecase=True) |
+                                          regex_replace("^domain-controller = ") }}
+                                          {% else %}
+                                            {% if ad_membership_ad_controller_random_selection %}
+                                            {{ ad_membership_ad_controllers | random }}
+                                            {% else %}
+                                            {{ ad_membership_ad_controllers | first }}
+                                            {% endif %}
+                                          {% endif %}'
+
+    - name: Make AD controller variable value usable
+      set_fact:
+        ad_membership_ad_controller: '{{ ad_membership_ad_controller | lower | replace(" ", "") }}'
+
+...

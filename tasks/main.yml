@@ -1,0 +1,34 @@
+---
+- name: Import tasks for prerequisites
+  import_tasks: prerequisites.yml
+  tags:
+    - prerequisites
+    - ad_join
+    - ad_leave
+
+- name: Import tasks for joining Active Directory
+  import_tasks: ad_join.yml
+  when:
+    - ad_membership_register_domain_state
+    - not ad_membership_register_join_state
+    - not ad_membership_leave_ad
+  tags:
+    - ad_join
+
+- name: Import tasks for deploying configurations
+  import_tasks: deploy_configurations.yml
+  when:
+    - not ad_membership_leave_ad
+  tags:
+    - deploy_configurations
+    - ad_join
+
+- name: Import tasks for leaving Active Directory
+  import_tasks: ad_leave.yml
+  when:
+    - ad_membership_leave_ad
+    - ad_membership_register_join_state
+  tags:
+    - ad_leave
+
+...
