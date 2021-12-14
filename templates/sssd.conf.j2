@@ -11,7 +11,7 @@ auth_provider = krb5
 chpass_provider = krb5
 access_provider = simple
 debug_level = 3
-dyndns_update = False
+dyndns_update = True
 
 ad_domain = {{ ansible_domain }}
 krb5_realm = {{ ansible_domain | upper }}
